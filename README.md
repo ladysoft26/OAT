@@ -1,2 +1,2 @@
 # OAT
-Job and scholarship application tracker
+Opportunities, job and scholarship application tracker

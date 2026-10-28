@@ -4,173 +4,264 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>My Application Tracker</title>
+
+  <title>Opportunity Tracker</title>
+
+  <meta
+    name="description"
+    content="Track job applications, scholarships, internships, grants, fellowships and other opportunities in one place."
+  >
+
   <link rel="stylesheet" href="styles.css">
+
+  <script src="app.js" defer></script>
 </head>
+
 <body>
-  <header class="header">
-    <div>
-      <h1>My OAT</h1>
-      <p>Manage your opportunities, jobs, scholarships and deadlines in one place.</p>
+  <header class="site-header">
+    <div class="container">
+      <h1>Opportunity Tracker</h1>
+      <p>
+        Keep your jobs, scholarships and other opportunities
+        organised in one place.
+      </p>
     </div>
   </header>
 
   <main class="container">
-    <section class="stats">
-      <div class="stat-card">
-        <span>Total opportunities</span>
-        <strong id="totalCount">0</strong>
-      </div>
-      <div class="stat-card">
-        <span>Not applied</span>
-        <strong id="pendingCount">0</strong>
-      </div>
-      <div class="stat-card">
-        <span>Applied</span>
-        <strong id="appliedCount">0</strong>
-      </div>
-      <div class="stat-card">
-        <span>Deadlines in 7 days</span>
-        <strong id="deadlineCount">0</strong>
-      </div>
+
+    <!-- Dashboard -->
+    <section class="dashboard" aria-label="Application dashboard">
+      <article class="stat-card">
+        <h2>Total opportunities</h2>
+        <p id="totalCount">0</p>
+      </article>
+
+      <article class="stat-card">
+        <h2>Not applied</h2>
+        <p id="pendingCount">0</p>
+      </article>
+
+      <article class="stat-card">
+        <h2>Applications sent</h2>
+        <p id="appliedCount">0</p>
+      </article>
+
+      <article class="stat-card">
+        <h2>Deadlines in 7 days</h2>
+        <p id="deadlineCount">0</p>
+      </article>
     </section>
 
-    <section class="panel">
-      <h2>Add an opportunity</h2>
+    <!-- Deadline notice -->
+    <section class="panel" aria-labelledby="deadlineHeading">
+      <h2 id="deadlineHeading">Deadline reminders</h2>
+      <p id="deadlineNotice" role="status" aria-live="polite">
+        Your upcoming deadlines will appear here.
+      </p>
+    </section>
+
+    <!-- Add or edit an opportunity -->
+    <section class="panel" aria-labelledby="formHeading">
+      <h2 id="formHeading">Add an opportunity</h2>
+
       <form id="applicationForm">
-        <div class="form-grid">
-          <label>
-            Type
-            <select id="type" required>
-              <option value="Scholarship">Scholarship</option>
-              <option value="Job">Job</option>
-            </select>
-          </label>
 
-          <label>
-            Name *
-            <input id="name" required placeholder="Scholarship or job title">
-          </label>
-
-          <label>
-            University or company
-            <input id="organization" placeholder="Organization name">
-          </label>
-
-          <label>
-            Country or location
-            <input id="location" placeholder="e.g. Canada or Remote">
-          </label>
-
-          <label>
-            Deadline
-            <input id="deadline" type="date">
-          </label>
-
-          <label>
-            Application status
-            <select id="status">
-              <option>Not applied</option>
-              <option>In progress</option>
-              <option>Applied</option>
-              <option>Interview</option>
-              <option>Offer received</option>
-              <option>Rejected</option>
-            </select>
-          </label>
-
-          <label>
-            Funding
-            <select id="funding">
-              <option>Unknown</option>
-              <option>Fully funded</option>
-              <option>Partially funded</option>
-              <option>Self-funded</option>
-              <option>Not applicable</option>
-            </select>
-          </label>
-
-          <label>
-            Official application link
-            <input id="url" type="url" placeholder="https://...">
-          </label>
+        <div class="form-group">
+          <label for="type">Opportunity type *</label>
+          <select id="type" name="type" required>
+            <option value="Scholarship">Scholarship</option>
+            <option value="Job">Job</option>
+            <option value="Internship">Internship</option>
+            <option value="Grant">Grant</option>
+            <option value="Fellowship">Fellowship</option>
+            <option value="Volunteering">Volunteering</option>
+            <option value="Others">Others</option>
+          </select>
         </div>
 
-        <label class="full-width">
-          Required documents
-          <textarea id="documents" rows="3"
-            placeholder="CV, transcript, recommendation letter..."></textarea>
-        </label>
+        <div class="form-group">
+          <label for="name">Opportunity name *</label>
+          <input
+            type="text"
+            id="name"
+            name="name"
+            placeholder="e.g. Fully Funded Master's Scholarship"
+            required
+            maxlength="200"
+          >
+        </div>
 
-        <label class="full-width">
-          Notes or next action
-          <textarea id="notes" rows="2"
-            placeholder="What do you need to do next?"></textarea>
-        </label>
+        <div class="form-group">
+          <label for="organization">Organisation or institution</label>
+          <input
+            type="text"
+            id="organization"
+            name="organization"
+            placeholder="e.g. University or company"
+            maxlength="200"
+          >
+        </div>
+
+        <div class="form-group">
+          <label for="location">Country or location</label>
+          <input
+            type="text"
+            id="location"
+            name="location"
+            placeholder="e.g. Nigeria, UK, Canada or Remote"
+            maxlength="150"
+          >
+        </div>
+
+        <div class="form-group">
+          <label for="deadline">Application deadline</label>
+          <input
+            type="date"
+            id="deadline"
+            name="deadline"
+          >
+        </div>
+
+        <div class="form-group">
+          <label for="status">Application status *</label>
+          <select id="status" name="status" required>
+            <option value="Not applied">Not applied</option>
+            <option value="In progress">In progress</option>
+            <option value="Applied">Applied</option>
+            <option value="Interview">Interview</option>
+            <option value="Offer received">Offer received</option>
+            <option value="Rejected">Rejected</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="funding">Funding level *</label>
+          <select id="funding" name="funding" required>
+            <option value="Unknown">Not yet known</option>
+            <option value="Fully funded">Fully funded</option>
+            <option value="Partially funded">Partially funded</option>
+            <option value="Self-funded">Self-funded</option>
+            <option value="Not applicable">Not applicable</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="url">Official opportunity link</label>
+          <input
+            type="url"
+            id="url"
+            name="url"
+            placeholder="https://example.com/opportunity"
+          >
+        </div>
+
+        <div class="form-group">
+          <label for="documents">Required documents</label>
+          <textarea
+            id="documents"
+            name="documents"
+            rows="3"
+            placeholder="CV, passport, transcript, recommendation letter..."
+            maxlength="2000"
+          ></textarea>
+        </div>
+
+        <div class="form-group">
+          <label for="notes">Notes</label>
+          <textarea
+            id="notes"
+            name="notes"
+            rows="4"
+            placeholder="Eligibility, funding details, next steps..."
+            maxlength="5000"
+          ></textarea>
+        </div>
 
         <button type="submit" class="primary-button">
           Add opportunity
         </button>
+
+        <button type="reset" class="secondary-button">
+          Clear form
+        </button>
       </form>
     </section>
 
-    <section class="panel">
-      <div class="list-header">
-        <div>
-          <h2>My opportunities</h2>
-          <p>Search, review and update your applications.</p>
-        </div>
-        <input id="search" type="search"
-          placeholder="Search opportunities...">
-      </div>
+    <!-- Search and filters -->
+    <section class="panel" aria-labelledby="searchHeading">
+      <h2 id="searchHeading">Find your opportunities</h2>
 
       <div class="filters">
-        <select id="typeFilter">
-          <option value="">All types</option>
-         <option value="Scholarship">Scholarship</option>
-    <option value="Job">Job</option>
-    <option value="Internship">Internship</option>
-    <option value="Grant">Grant</option>
-    <option value="Fellowship">Fellowship</option>
-    <option value="Volunteering">Volunteering</option>
-    <option value="Others">Others</option>
-  </select>
-</label>
-        </select>
-        <select id="statusFilter">
-          <option value="">All statuses</option>
-          <option>Not applied</option>
-          <option>In progress</option>
-          <option>Applied</option>
-          <option>Interview</option>
-          <option>Offer received</option>
-          <option>Rejected</option>
-        </select>
-        <select id="fundingFilter">
-          <option value="">All funding</option>
-          <option>Fully funded</option>
-          <option>Partially funded</option>
-          <option>Self-funded</option>
-          <option>Unknown</option>
-        </select>
-      </div>
+        <div class="form-group">
+          <label for="search">Search</label>
+          <input
+            type="search"
+            id="search"
+            placeholder="Search names, organisations, notes..."
+          >
+        </div>
 
-      <div id="deadlineNotice" class="notice">
-        Your upcoming deadlines will appear here.
-      </div>
+        <div class="form-group">
+          <label for="typeFilter">Filter by type</label>
+          <select id="typeFilter">
+            <option value="">All types</option>
+            <option value="Scholarship">Scholarship</option>
+            <option value="Job">Job</option>
+            <option value="Internship">Internship</option>
+            <option value="Grant">Grant</option>
+            <option value="Fellowship">Fellowship</option>
+            <option value="Volunteering">Volunteering</option>
+            <option value="Others">Others</option>
+          </select>
+        </div>
 
-      <div id="applicationList" class="application-list"></div>
-      <p id="emptyMessage" class="empty-message">
-        No opportunities yet. Add your first one above!
-      </p>
+        <div class="form-group">
+          <label for="statusFilter">Filter by status</label>
+          <select id="statusFilter">
+            <option value="">All statuses</option>
+            <option value="Not applied">Not applied</option>
+            <option value="In progress">In progress</option>
+            <option value="Applied">Applied</option>
+            <option value="Interview">Interview</option>
+            <option value="Offer received">Offer received</option>
+            <option value="Rejected">Rejected</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="fundingFilter">Filter by funding</label>
+          <select id="fundingFilter">
+            <option value="">All funding levels</option>
+            <option value="Unknown">Not yet known</option>
+            <option value="Fully funded">Fully funded</option>
+            <option value="Partially funded">Partially funded</option>
+            <option value="Self-funded">Self-funded</option>
+            <option value="Not applicable">Not applicable</option>
+          </select>
+        </div>
+      </div>
     </section>
 
-    <p class="footer-note">
-      Keep your goals organized. Check official sources for accurate
-      scholarship funding and application deadlines.
-    </p>
-  </main>
+    <!-- Opportunity list -->
+    <section class="panel" aria-labelledby="listHeading">
+      <h2 id="listHeading">My opportunities</h2>
 
-  <script src="app.js"></script>
+      <p id="emptyMessage">
+        No opportunities yet. Add your first one above!
+      </p>
+
+      <div id="applicationList" aria-live="polite"></div>
+    </section>
+
+    <footer class="site-footer">
+      <p>Opportunity Tracker — organise your next opportunity.</p>
+      <p>
+        Keep a backup of your records. This version stores data
+        in your current browser.
+      </p>
+    </footer>
+
+  </main>
 </body>
 </html>

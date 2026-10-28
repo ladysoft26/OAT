@@ -1,0 +1,169 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Application Tracker</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="header">
+    <div>
+      <h1>My OAT</h1>
+      <p>Manage your jobs, scholarships and deadlines in one place.</p>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="stats">
+      <div class="stat-card">
+        <span>Total opportunities</span>
+        <strong id="totalCount">0</strong>
+      </div>
+      <div class="stat-card">
+        <span>Not applied</span>
+        <strong id="pendingCount">0</strong>
+      </div>
+      <div class="stat-card">
+        <span>Applied</span>
+        <strong id="appliedCount">0</strong>
+      </div>
+      <div class="stat-card">
+        <span>Deadlines in 7 days</span>
+        <strong id="deadlineCount">0</strong>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>Add an opportunity</h2>
+      <form id="applicationForm">
+        <div class="form-grid">
+          <label>
+            Type
+            <select id="type" required>
+              <option value="Scholarship">Scholarship</option>
+              <option value="Job">Job</option>
+            </select>
+          </label>
+
+          <label>
+            Name *
+            <input id="name" required placeholder="Scholarship or job title">
+          </label>
+
+          <label>
+            University or company
+            <input id="organization" placeholder="Organization name">
+          </label>
+
+          <label>
+            Country or location
+            <input id="location" placeholder="e.g. Canada or Remote">
+          </label>
+
+          <label>
+            Deadline
+            <input id="deadline" type="date">
+          </label>
+
+          <label>
+            Application status
+            <select id="status">
+              <option>Not applied</option>
+              <option>In progress</option>
+              <option>Applied</option>
+              <option>Interview</option>
+              <option>Offer received</option>
+              <option>Rejected</option>
+            </select>
+          </label>
+
+          <label>
+            Funding
+            <select id="funding">
+              <option>Unknown</option>
+              <option>Fully funded</option>
+              <option>Partially funded</option>
+              <option>Self-funded</option>
+              <option>Not applicable</option>
+            </select>
+          </label>
+
+          <label>
+            Official application link
+            <input id="url" type="url" placeholder="https://...">
+          </label>
+        </div>
+
+        <label class="full-width">
+          Required documents
+          <textarea id="documents" rows="3"
+            placeholder="CV, transcript, recommendation letter..."></textarea>
+        </label>
+
+        <label class="full-width">
+          Notes or next action
+          <textarea id="notes" rows="2"
+            placeholder="What do you need to do next?"></textarea>
+        </label>
+
+        <button type="submit" class="primary-button">
+          Add opportunity
+        </button>
+      </form>
+    </section>
+
+    <section class="panel">
+      <div class="list-header">
+        <div>
+          <h2>My opportunities</h2>
+          <p>Search, review and update your applications.</p>
+        </div>
+        <input id="search" type="search"
+          placeholder="Search opportunities...">
+      </div>
+
+      <div class="filters">
+        <select id="typeFilter">
+          <option value="">All types</option>
+          <option>Scholarship</option>
+          <option>Job</option>
+        </select>
+        <select id="statusFilter">
+          <option value="">All statuses</option>
+          <option>Not applied</option>
+          <option>In progress</option>
+          <option>Applied</option>
+          <option>Interview</option>
+          <option>Offer received</option>
+          <option>Rejected</option>
+        </select>
+        <select id="fundingFilter">
+          <option value="">All funding</option>
+          <option>Fully funded</option>
+          <option>Partially funded</option>
+          <option>Self-funded</option>
+          <option>Unknown</option>
+        </select>
+      </div>
+
+      <div id="deadlineNotice" class="notice">
+        Your upcoming deadlines will appear here.
+      </div>
+
+      <div id="applicationList" class="application-list"></div>
+      <p id="emptyMessage" class="empty-message">
+        No opportunities yet. Add your first one above!
+      </p>
+    </section>
+
+    <p class="footer-note">
+      Keep your goals organized. Check official sources for accurate
+      scholarship funding and application deadlines.
+    </p>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>

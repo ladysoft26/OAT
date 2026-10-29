@@ -2,7 +2,7 @@
 "use strict";
 
 // =============================================
-// OPPORTUNITY HUB
+// OPPORTUNITY TRACKER
 // Browser storage version
 // =============================================
 

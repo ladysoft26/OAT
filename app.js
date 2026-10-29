@@ -2,127 +2,92 @@
 "use strict";
 
 // =============================================
-// OPPORTUNITY TRACKER
-// Deep-blue dashboard compatible with existing HTML
+// OPPORTUNITY HUB
 // Browser storage version
 // =============================================
 
 const STORAGE_KEY = "opportunityTrackerApplicationsV1";
 
-const OPPORTUNITY_TYPES = [
+const TYPES = [
   "Scholarship", "Job", "Internship", "Grant",
   "Fellowship", "Volunteering", "Others"
 ];
 
-const APPLICATION_STATUSES = [
+const STATUSES = [
   "Not applied", "In progress", "Applied",
   "Interview", "Offer received", "Rejected"
 ];
 
-const FUNDING_OPTIONS = [
+const FUNDING = [
   "Unknown", "Fully funded", "Partially funded",
   "Self-funded", "Not applicable"
 ];
 
-const form = document.getElementById("applicationForm");
-const applicationList = document.getElementById("applicationList");
-const emptyMessage = document.getElementById("emptyMessage");
-const searchInput = document.getElementById("search");
-const typeFilter = document.getElementById("typeFilter");
-const statusFilter = document.getElementById("statusFilter");
-const fundingFilter = document.getElementById("fundingFilter");
-const deadlineNotice = document.getElementById("deadlineNotice");
+const $ = id => document.getElementById(id);
+
+const form = $("applicationForm");
+const applicationList = $("applicationList");
+const emptyMessage = $("emptyMessage");
 
 let applications = [];
 let editingId = null;
+let toastTimer = null;
 
-// ---------- Helpers ----------
+// ---------- Utilities ----------
 
-function escapeHTML(value) {
-  return String(value ?? "").replace(/[&<>"']/g, char => ({
-    "&": "&amp;",
-    "<": "&lt;",
-    ">": "&gt;",
-    '"': "&quot;",
-    "'": "&#039;"
-  })[char]);
+function createId() {
+  return crypto.randomUUID
+    ? crypto.randomUUID()
+    : Date.now().toString(36) + Math.random().toString(36).slice(2);
 }
 
 function safeText(value) {
   return typeof value === "string" ? value : "";
 }
 
-function getElement(id) {
-  return document.getElementById(id);
+function escapeHTML(value) {
+  return String(value ?? "").replace(/[&<>"']/g, c => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;",
+    '"': "&quot;", "'": "&#039;"
+  })[c]);
 }
 
 function getValue(id) {
-  const element = getElement(id);
-  return element ? element.value.trim() : "";
-}
-
-function createId() {
-  if (window.crypto && window.crypto.randomUUID) {
-    return window.crypto.randomUUID();
-  }
-
-  return Date.now().toString(36) +
-    Math.random().toString(36).slice(2);
+  return $(id)?.value.trim() || "";
 }
 
 function todayString() {
-  const now = new Date();
-
-  return [
-    now.getFullYear(),
-    String(now.getMonth() + 1).padStart(2, "0"),
-    String(now.getDate()).padStart(2, "0")
-  ].join("-");
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
-// Accept the YYYY-MM-DD value returned by an HTML date picker.
-// Empty deadlines are allowed.
 function validDate(value) {
-  if (value === "" || value === null || value === undefined) {
-    return true;
-  }
-
-  if (typeof value !== "string") {
-    return false;
-  }
+  if (value === "" || value === null || value === undefined) return true;
+  if (typeof value !== "string") return false;
 
   const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
-
-  if (!match) {
-    return false;
-  }
+  if (!match) return false;
 
   const year = Number(match[1]);
   const month = Number(match[2]);
   const day = Number(match[3]);
 
-  if (month < 1 || month > 12 || day < 1 || day > 31) {
-    return false;
-  }
+  if (month < 1 || month > 12 || day < 1 || day > 31) return false;
 
   const date = new Date(Date.UTC(year, month - 1, day));
 
-  return (
-    date.getUTCFullYear() === year &&
+  return date.getUTCFullYear() === year &&
     date.getUTCMonth() === month - 1 &&
-    date.getUTCDate() === day
-  );
+    date.getUTCDate() === day;
 }
 
 function daysUntil(value) {
-  if (!value || !validDate(value)) {
-    return null;
-  }
+  if (!value || !validDate(value)) return null;
 
-  const deadline = Date.parse(value + "T00:00:00Z");
-  const today = Date.parse(todayString() + "T00:00:00Z");
-
-  return Math.round((deadline - today) / 86400000);
+  return Math.round(
+    (Date.parse(value + "T00:00:00Z") -
+     Date.parse(todayString() + "T00:00:00Z")) / 86400000
+  );
 }
 
 function formatDate(value) {
@@ -130,94 +95,72 @@ function formatDate(value) {
   if (!validDate(value)) return "Invalid date";
 
   const [year, month, day] = value.split("-").map(Number);
-
   return new Date(year, month - 1, day).toLocaleDateString(
     undefined,
     { day: "numeric", month: "short", year: "numeric" }
   );
 }
 
-function getSafeUrl(value) {
+function safeUrl(value) {
   if (!value) return "";
 
   try {
     const url = new URL(value);
-
-    if (url.protocol === "https:" || url.protocol === "http:") {
-      return url.href;
-    }
-  } catch (error) {
+    return ["https:", "http:"].includes(url.protocol) ? url.href : "";
+  } catch {
     return "";
   }
-
-  return "";
 }
 
-function showMessage(message) {
-  alert(message);
+function showToast(message, error = false) {
+  const toast = $("toast");
+  toast.textContent = message;
+  toast.classList.toggle("error", error);
+  toast.classList.add("show");
+
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => toast.classList.remove("show"), 3200);
 }
 
-// ---------- Record validation ----------
+// ---------- Records and browser storage ----------
 
 function normalizeRecord(record) {
-  if (!record || typeof record !== "object") return null;
-
-  if (typeof record.name !== "string" || !record.name.trim()) {
+  if (!record || typeof record !== "object" ||
+      typeof record.name !== "string" || !record.name.trim()) {
     return null;
   }
-
-  const deadline = validDate(record.deadline)
-    ? (record.deadline || "")
-    : "";
 
   return {
     id: typeof record.id === "string" && record.id
       ? record.id : createId(),
-
-    type: OPPORTUNITY_TYPES.includes(record.type)
-      ? record.type : "Others",
-
+    type: TYPES.includes(record.type) ? record.type : "Others",
     name: record.name.trim(),
-
     organization: safeText(record.organization),
     location: safeText(record.location),
-
-    deadline,
-
-    status: APPLICATION_STATUSES.includes(record.status)
-      ? record.status : "Not applied",
-
-    funding: FUNDING_OPTIONS.includes(record.funding)
-      ? record.funding : "Unknown",
-
-    url: getSafeUrl(record.url),
+    deadline: validDate(record.deadline) ? record.deadline || "" : "",
+    status: STATUSES.includes(record.status) ? record.status : "Not applied",
+    funding: FUNDING.includes(record.funding) ? record.funding : "Unknown",
+    url: safeUrl(record.url),
+    description: safeText(record.description),
     documents: safeText(record.documents),
     notes: safeText(record.notes),
+    rejectionReason: safeText(record.rejectionReason),
     updatedAt: safeText(record.updatedAt)
   };
 }
 
-// ---------- Browser storage ----------
-
 function loadApplications() {
   try {
     const saved = localStorage.getItem(STORAGE_KEY);
-
     if (!saved) return [];
 
     const parsed = JSON.parse(saved);
-
     if (!Array.isArray(parsed)) return [];
 
     return parsed.map(normalizeRecord).filter(Boolean);
   } catch (error) {
-    console.error("Could not load saved records:", error);
-
-    showMessage(
-      "Your records could not be loaded. Do not clear your browser data. " +
-      "Check the browser console for details."
-    );
-
+    console.error("Could not load applications:", error);
+    showToast("Saved records could not be loaded. Do not clear browser data.", true);
     return [];
   }
 }
@@ -227,467 +170,570 @@ function saveApplications() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(applications));
     return true;
   } catch (error) {
-    console.error("Could not save records:", error);
-
-    showMessage(
-      "Your changes could not be saved. Browser storage may be full. " +
-      "Export a backup if possible."
-    );
-
+    console.error("Could not save applications:", error);
+    showToast("Unable to save changes. Export a backup if possible.", true);
     return false;
   }
 }
 
-// ---------- Deadline labels ----------
+// ---------- Deadline calculations ----------
 
-function getDeadlineLabel(deadline) {
-  const days = daysUntil(deadline);
+// This is the single source of truth for all deadline counters.
+function getDeadlineCounts() {
+  const active = applications.filter(item =>
+    !["Offer received", "Rejected"].includes(item.status)
+  );
 
-  if (days === null) {
-    return { text: "No deadline", className: "" };
-  }
-
-  if (days < 0) {
-    return {
-      text: `Overdue by ${Math.abs(days)} day(s)`,
-      className: "overdue"
-    };
-  }
-
-  if (days === 0) {
-    return {
-      text: "Deadline today!",
-      className: "overdue"
-    };
-  }
-
-  if (days <= 3) {
-    return {
-      text: `${days} day(s) left`,
-      className: "overdue"
-    };
-  }
-
-  if (days <= 7) {
-    return {
-      text: `${days} days left`,
-      className: "deadline"
-    };
-  }
-
-  return {
-    text: `${days} days left`,
-    className: ""
-  };
-}
-
-// ---------- Dashboard ----------
-
-function updateDashboard() {
-  if (getElement("totalCount")) {
-    getElement("totalCount").textContent = applications.length;
-  }
-
-  if (getElement("pendingCount")) {
-    getElement("pendingCount").textContent =
-      applications.filter(item => item.status === "Not applied").length;
-  }
-
-  if (getElement("appliedCount")) {
-    getElement("appliedCount").textContent =
-      applications.filter(item => item.status === "Applied").length;
-  }
-
-  if (getElement("deadlineCount")) {
-    getElement("deadlineCount").textContent =
-      applications.filter(item => {
-        const days = daysUntil(item.deadline);
-        return days !== null && days >= 0 && days <= 7;
-      }).length;
-  }
-
-  updateDeadlineNotice();
-}
-
-function updateDeadlineNotice() {
-  if (!deadlineNotice) return;
-
-  const active = item =>
-    !["Offer received", "Rejected"].includes(item.status);
-
-  const upcoming = applications
-    .filter(item => {
-      const days = daysUntil(item.deadline);
-      return active(item) && days !== null && days >= 0 && days <= 7;
-    })
-    .sort((a, b) => a.deadline.localeCompare(b.deadline));
-
-  const overdue = applications.filter(item => {
+  const upcoming = active.filter(item => {
     const days = daysUntil(item.deadline);
-    return active(item) && days !== null && days < 0;
+    return days !== null && days >= 0 && days <= 7;
   });
 
-  const messages = [];
+  const overdue = active.filter(item => {
+    const days = daysUntil(item.deadline);
+    return days !== null && days < 0;
+  });
+
+  return { upcoming, overdue };
+}
+
+function deadlineInfo(item) {
+  const days = daysUntil(item.deadline);
+
+  if (days === null) return { text: "No deadline", tone: "" };
+  if (days < 0) return { text: `${Math.abs(days)} day(s) overdue`, tone: "overdue" };
+  if (days === 0) return { text: "Due today", tone: "overdue" };
+  if (days <= 3) return { text: `${days} day(s) left`, tone: "overdue" };
+  if (days <= 7) return { text: `${days} days left`, tone: "deadline" };
+
+  return { text: `${days} days left`, tone: "" };
+}
+
+function makeDeadlineItem(item) {
+  const info = deadlineInfo(item);
+  const row = document.createElement("article");
+  row.className = "deadline-item";
+
+  if (info.tone === "overdue") row.classList.add("overdue");
+  if (info.tone === "deadline") row.classList.add("due-soon");
+
+  const marker = document.createElement("span");
+  marker.className = "deadline-marker";
+
+  const content = document.createElement("div");
+  content.className = "deadline-content";
+
+  const title = document.createElement("strong");
+  title.textContent = item.name;
+
+  const detail = document.createElement("p");
+  detail.textContent = `${item.type} · ${formatDate(item.deadline)}`;
+
+  content.append(title, detail);
+
+  const badge = document.createElement("span");
+  badge.className = "deadline-label";
+  badge.textContent = info.text;
+
+  row.append(marker, content, badge);
+  return row;
+}
+
+function renderDeadlines() {
+  const { upcoming, overdue } = getDeadlineCounts();
+
+  // All these numbers use exactly the same upcoming count.
+  document.querySelectorAll("[data-deadline-count]").forEach(element => {
+    element.textContent = upcoming.length;
+  });
+
+  $("navDeadlineCount").textContent = upcoming.length + overdue.length;
+  $("overdueCount").textContent = overdue.length;
+
+  const notice = $("deadlineNotice");
+  notice.className = "notice";
 
   if (overdue.length) {
-    messages.push(`${overdue.length} overdue deadline(s).`);
+    notice.classList.add("overdue");
+    notice.textContent =
+      `${overdue.length} overdue deadline(s) need attention. ` +
+      `${upcoming.length} active deadline(s) are due within 7 days.`;
+  } else if (upcoming.length) {
+    notice.classList.add("deadline");
+    notice.textContent =
+      `${upcoming.length} active deadline(s) are due within the next 7 days.`;
+  } else {
+    notice.textContent = "You're all caught up! No active deadlines within the next 7 days.";
   }
 
-  if (upcoming.length) {
-    messages.push(
-      `${upcoming.length} upcoming deadline(s): ` +
-      upcoming.slice(0, 3).map(item =>
-        `${item.name} (${formatDate(item.deadline)})`
-      ).join(", ") + "."
-    );
-  }
+  const all = [...overdue, ...upcoming]
+    .sort((a, b) => a.deadline.localeCompare(b.deadline));
 
-  deadlineNotice.textContent = messages.length
-    ? messages.join(" ")
-    : "You're all caught up! No active deadlines within the next 7 days.";
+  const preview = $("deadlinePreview");
+  const list = $("deadlineList");
 
-  deadlineNotice.classList.toggle("overdue", overdue.length > 0);
-  deadlineNotice.classList.toggle(
-    "deadline",
-    overdue.length === 0 && upcoming.length > 0
-  );
-}
+  preview.replaceChildren();
+  list.replaceChildren();
 
-// ---------- Search and filters ----------
-
-function getFilteredApplications() {
-  const query = searchInput ? searchInput.value.trim().toLowerCase() : "";
-  const type = typeFilter ? typeFilter.value : "";
-  const status = statusFilter ? statusFilter.value : "";
-  const funding = fundingFilter ? fundingFilter.value : "";
-
-  return applications
-    .filter(item => {
-      const searchable = [
-        item.name, item.type, item.organization,
-        item.location, item.funding, item.documents, item.notes
-      ].join(" ").toLowerCase();
-
-      return (
-        (!query || searchable.includes(query)) &&
-        (!type || item.type === type) &&
-        (!status || item.status === status) &&
-        (!funding || item.funding === funding)
-      );
-    })
-    .sort((a, b) => {
-      if (!a.deadline && !b.deadline) return 0;
-      if (!a.deadline) return 1;
-      if (!b.deadline) return -1;
-
-      return a.deadline.localeCompare(b.deadline);
-    });
-}
-
-// ---------- Render opportunity cards ----------
-
-function renderApplications() {
-  if (!applicationList || !emptyMessage) {
-    console.error(
-      "Missing applicationList or emptyMessage element in index.html."
-    );
+  if (!all.length) {
+    const message = document.createElement("p");
+    message.className = "muted";
+    message.textContent = "No upcoming or overdue deadlines.";
+    preview.append(message);
+    list.append(message.cloneNode(true));
     return;
   }
 
-  const filtered = getFilteredApplications();
+  all.slice(0, 4).forEach(item => preview.append(makeDeadlineItem(item)));
+  all.forEach(item => list.append(makeDeadlineItem(item)));
+}
 
-  applicationList.replaceChildren();
-  emptyMessage.style.display = filtered.length ? "none" : "block";
+// ---------- Application cards ----------
 
-  if (!filtered.length) {
-    emptyMessage.textContent = applications.length
-      ? "No opportunities match your search or filters."
-      : "No opportunities yet. Add your first one above!";
-  }
+function makeAction(label, action, id) {
+  const button = document.createElement("button");
+  button.type = "button";
+  button.dataset.action = action;
+  button.dataset.id = id;
+  button.textContent = label;
+  return button;
+}
 
-  filtered.forEach(item => {
-    const card = document.createElement("article");
-    card.className = "application-card";
+function makeCard(item) {
+  const card = document.createElement("article");
+  card.className = "application-card";
 
-    const deadline = getDeadlineLabel(item.deadline);
+  const info = deadlineInfo(item);
+  const statusClass = {
+    "Applied": "applied",
+    "Offer received": "offer",
+    "In progress": "progress",
+    "Interview": "interview",
+    "Rejected": "rejected"
+  }[item.status] || "";
 
-    const statusClass = {
-      "Applied": "applied",
-      "Offer received": "offer",
-      "In progress": "progress",
-      "Interview": "interview",
-      "Rejected": "rejected"
-    }[item.status] || "";
+  const title = document.createElement("h3");
+  title.textContent = item.name;
 
-    const safeUrl = getSafeUrl(item.url);
+  const subtitle = document.createElement("p");
+  subtitle.textContent = [
+    item.type, item.organization, item.location
+  ].filter(Boolean).join(" · ");
 
-    card.innerHTML = `
-      <h3>${escapeHTML(item.name)}</h3>
+  const badges = document.createElement("div");
+  badges.className = "record-details";
 
-      <p>
-        ${escapeHTML(item.type)}
-        ${item.organization ? " · " + escapeHTML(item.organization) : ""}
-        ${item.location ? " · " + escapeHTML(item.location) : ""}
-      </p>
-
-      <div class="record-details">
-        <span class="pill ${statusClass}">
-          ${escapeHTML(item.status)}
-        </span>
-
-        <span class="pill">
-          ${escapeHTML(item.funding)}
-        </span>
-
-        <span class="pill ${deadline.className}">
-          ${escapeHTML(formatDate(item.deadline))}
-          ${item.deadline ? " · " + escapeHTML(deadline.text) : ""}
-        </span>
-      </div>
-
-      ${item.documents ? `
-        <p><strong>Documents:</strong> ${escapeHTML(item.documents)}</p>
-      ` : ""}
-
-      ${item.notes ? `
-        <p><strong>Notes:</strong> ${escapeHTML(item.notes)}</p>
-      ` : ""}
-
-      ${safeUrl ? `
-        <p>
-          <a href="${escapeHTML(safeUrl)}"
-             target="_blank"
-             rel="noopener noreferrer">
-            Open application website ↗
-          </a>
-        </p>
-      ` : ""}
-
-      <div class="card-actions">
-        <button type="button" data-action="edit"
-          data-id="${escapeHTML(item.id)}">Edit</button>
-
-        <button type="button" data-action="toggle"
-          data-id="${escapeHTML(item.id)}">
-          ${item.status === "Applied" ? "Mark not applied" : "Mark applied"}
-        </button>
-
-        <button type="button" data-action="export-one"
-          data-id="${escapeHTML(item.id)}">Export record</button>
-
-        <button type="button" data-action="delete"
-          data-id="${escapeHTML(item.id)}">Delete</button>
-      </div>
-    `;
-
-    applicationList.appendChild(card);
+  [
+    [item.status, statusClass],
+    [item.funding, ""],
+    [item.deadline ? `${formatDate(item.deadline)} · ${info.text}` : "No deadline", info.tone]
+  ].forEach(([text, className]) => {
+    const badge = document.createElement("span");
+    badge.className = `pill ${className}`;
+    badge.textContent = text;
+    badges.append(badge);
   });
 
+  card.append(title, subtitle, badges);
+
+  if (item.description) {
+    const description = document.createElement("p");
+    description.className = "description-preview";
+    description.textContent = item.description;
+    card.append(description);
+  }
+
+  if (item.documents) {
+    const documents = document.createElement("p");
+    documents.textContent = `Documents: ${item.documents}`;
+    card.append(documents);
+  }
+
+  if (item.notes) {
+    const notes = document.createElement("p");
+    notes.textContent = `Notes: ${item.notes}`;
+    card.append(notes);
+  }
+
+  if (item.status === "Rejected") {
+    const reason = document.createElement("p");
+    reason.className = "reason";
+    reason.textContent = `Rejection feedback: ${
+      item.rejectionReason || "No reason recorded yet."
+    }`;
+    card.append(reason);
+  }
+
+  if (item.url) {
+    const link = document.createElement("a");
+    link.href = item.url;
+    link.target = "_blank";
+    link.rel = "noopener noreferrer";
+    link.textContent = "Open official website ↗";
+    card.append(link);
+  }
+
+  const actions = document.createElement("div");
+  actions.className = "card-actions";
+
+  actions.append(
+    makeAction("Edit", "edit", item.id),
+    makeAction(
+      item.status === "Applied" ? "Mark not applied" : "Mark applied",
+      "toggle", item.id
+    ),
+    makeAction("Export", "export-one", item.id),
+    makeAction("Delete", "delete", item.id)
+  );
+
+  card.append(actions);
+  return card;
+}
+
+function renderApplications() {
+  const query = $("search").value.trim().toLowerCase();
+  const type = $("typeFilter").value;
+  const status = $("statusFilter").value;
+  const funding = $("fundingFilter").value;
+
+  const filtered = applications.filter(item => {
+    const searchable = [
+      item.name, item.type, item.organization, item.location,
+      item.funding, item.description, item.documents, item.notes,
+      item.rejectionReason
+    ].join(" ").toLowerCase();
+
+    return (!query || searchable.includes(query)) &&
+      (!type || item.type === type) &&
+      (!status || item.status === status) &&
+      (!funding || item.funding === funding);
+  }).sort((a, b) => {
+    if (!a.deadline && !b.deadline) return 0;
+    if (!a.deadline) return 1;
+    if (!b.deadline) return -1;
+    return a.deadline.localeCompare(b.deadline);
+  });
+
+  applicationList.replaceChildren();
+
+  $("resultCount").textContent =
+    `${filtered.length} ${filtered.length === 1 ? "opportunity" : "opportunities"}`;
+
+  emptyMessage.hidden = filtered.length > 0;
+  emptyMessage.textContent = applications.length
+    ? "No opportunities match your search or filters."
+    : "No opportunities yet. Add your first one!";
+
+  filtered.forEach(item => applicationList.append(makeCard(item)));
+
+  renderRecentApplications();
+  renderRejections();
   updateDashboard();
 }
 
-// ---------- Form editing ----------
+// ---------- Recent applications ----------
+
+function renderRecentApplications() {
+  const container = $("recentApplications");
+  container.replaceChildren();
+
+  const recent = [...applications].reverse().slice(0, 4);
+
+  if (!recent.length) {
+    const message = document.createElement("p");
+    message.className = "muted";
+    message.textContent = "Your latest opportunities will appear here.";
+    container.append(message);
+    return;
+  }
+
+  recent.forEach(item => container.append(makeCard(item)));
+}
+
+// ---------- Rejection review ----------
+
+function renderRejections() {
+  const rejected = applications.filter(item => item.status === "Rejected");
+
+  $("rejectionCount").textContent = rejected.length;
+  $("rejectionPageCount").textContent =
+    `${rejected.length} rejected`;
+
+  const home = $("homeRejectionList");
+  const page = $("rejectionList");
+
+  home.replaceChildren();
+  page.replaceChildren();
+
+  $("emptyRejections").hidden = rejected.length > 0;
+
+  if (!rejected.length) {
+    const message = document.createElement("p");
+    message.className = "muted";
+    message.textContent = "No rejected applications yet. If an application is rejected, change its status to Rejected to review it here.";
+    home.append(message);
+    return;
+  }
+
+  rejected.forEach(item => {
+    const card = document.createElement("article");
+    card.className = "rejection-card";
+
+    const title = document.createElement("h3");
+    title.textContent = item.name;
+
+    const subtitle = document.createElement("p");
+    subtitle.className = "muted";
+    subtitle.textContent = [item.type, item.organization]
+      .filter(Boolean).join(" · ");
+
+    const reason = document.createElement("p");
+    reason.className = "reason";
+    reason.textContent = `Reason / feedback: ${
+      item.rejectionReason || "Not recorded yet. Edit this application to add details."
+    }`;
+
+    card.append(title, subtitle, reason);
+
+    if (item.description) {
+      const description = document.createElement("p");
+      description.className = "lesson";
+      description.textContent = `Opportunity: ${item.description}`;
+      card.append(description);
+    }
+
+    const actions = document.createElement("div");
+    actions.className = "card-actions";
+    actions.append(makeAction("Edit rejection notes", "edit", item.id));
+    card.append(actions);
+
+    page.append(card);
+  });
+
+  rejected.slice(0, 3).forEach(item => {
+    const summary = document.createElement("article");
+    summary.className = "rejection-card";
+
+    const title = document.createElement("h3");
+    title.textContent = item.name;
+
+    const reason = document.createElement("p");
+    reason.className = "reason";
+    reason.textContent = item.rejectionReason ||
+      "No feedback recorded yet. Edit to add your notes.";
+
+    const edit = makeAction("Add / edit reason", "edit", item.id);
+
+    summary.append(title, reason, edit);
+    home.append(summary);
+  });
+}
+
+// ---------- Dashboard counters ----------
+
+function updateDashboard() {
+  $("totalCount").textContent = applications.length;
+  $("pendingCount").textContent =
+    applications.filter(item => item.status === "Not applied").length;
+  $("appliedCount").textContent =
+    applications.filter(item => item.status === "Applied").length;
+
+  renderDeadlines();
+}
+
+// ---------- Form ----------
+
+function updateRejectionField() {
+  const rejected = $("status").value === "Rejected";
+  $("rejectionReasonGroup").hidden = !rejected;
+}
 
 function clearForm() {
   form.reset();
   editingId = null;
-
-  const submitButton = form.querySelector('[type="submit"]');
-
-  if (submitButton) {
-    submitButton.textContent = "Add opportunity";
-  }
+  $("formHeading").textContent = "Add an opportunity";
+  $("submitButton").textContent = "＋ Save opportunity";
+  $("cancelEdit").hidden = true;
+  updateRejectionField();
 }
 
 function fillForm(item) {
-  [
+  const fields = [
     "type", "name", "organization", "location", "deadline",
-    "status", "funding", "url", "documents", "notes"
-  ].forEach(field => {
-    const element = getElement(field);
+    "status", "funding", "url", "description", "documents",
+    "notes", "rejectionReason"
+  ];
+
+  fields.forEach(field => {
+    const element = $(field);
     if (element) element.value = item[field] || "";
   });
 
   editingId = item.id;
+  $("formHeading").textContent = "Edit opportunity";
+  $("submitButton").textContent = "Save changes";
+  $("cancelEdit").hidden = false;
 
-  const submitButton = form.querySelector('[type="submit"]');
+  updateRejectionField();
 
-  if (submitButton) {
-    submitButton.textContent = "Save changes";
-  }
-
-  form.scrollIntoView({ behavior: "smooth", block: "start" });
-
-  if (getElement("name")) getElement("name").focus();
+  location.hash = "addOpportunity";
+  $("name").focus();
 }
 
-// ---------- Add and update records ----------
+$("status").addEventListener("change", updateRejectionField);
 
-if (form) {
-  form.addEventListener("submit", event => {
-    event.preventDefault();
+$("cancelEdit").addEventListener("click", clearForm);
 
-    const name = getValue("name");
-    const type = getValue("type");
-    const status = getValue("status");
-    const funding = getValue("funding");
+form.addEventListener("reset", () => {
+  setTimeout(() => {
+    if (!editingId) updateRejectionField();
+  }, 0);
+});
 
-    // Read the date picker directly. Its value is YYYY-MM-DD or "".
-    const deadlineInput = getElement("deadline");
-    const deadline = deadlineInput ? deadlineInput.value : "";
+form.addEventListener("submit", event => {
+  event.preventDefault();
 
-    const url = getValue("url");
+  const name = getValue("name");
+  const type = getValue("type");
+  const status = getValue("status");
+  const funding = getValue("funding");
+  const deadline = $("deadline").value;
+  const url = getValue("url");
 
-    if (!name) {
-      showMessage("Please enter an opportunity name.");
-      return;
-    }
+  if (!name) {
+    showToast("Please enter an opportunity name.", true);
+    return;
+  }
 
-    if (!OPPORTUNITY_TYPES.includes(type)) {
-      showMessage("Please select a valid opportunity type.");
-      return;
-    }
+  if (!TYPES.includes(type) || !STATUSES.includes(status) ||
+      !FUNDING.includes(funding)) {
+    showToast("Please select valid opportunity options.", true);
+    return;
+  }
 
-    if (!APPLICATION_STATUSES.includes(status)) {
-      showMessage("Please select a valid application status.");
-      return;
-    }
+  if (deadline !== "" && !validDate(deadline)) {
+    showToast("Please select a valid deadline from the calendar.", true);
+    return;
+  }
 
-    if (!FUNDING_OPTIONS.includes(funding)) {
-      showMessage("Please select a valid funding option.");
-      return;
-    }
+  if (url && !safeUrl(url)) {
+    showToast("Enter a valid website link beginning with http:// or https://.", true);
+    return;
+  }
 
-    if (deadline !== "" && !validDate(deadline)) {
-      showMessage("Please select a valid date using the calendar.");
-      return;
-    }
+  const record = {
+    id: editingId || createId(),
+    type,
+    name,
+    organization: getValue("organization"),
+    location: getValue("location"),
+    deadline,
+    status,
+    funding,
+    url: safeUrl(url),
+    description: getValue("description"),
+    documents: getValue("documents"),
+    notes: getValue("notes"),
+    rejectionReason: getValue("rejectionReason"),
+    updatedAt: new Date().toISOString()
+  };
 
-    if (url && !getSafeUrl(url)) {
-      showMessage("Enter a valid link beginning with http:// or https://.");
-      return;
-    }
+  const previous = applications;
 
-    const record = {
-      id: editingId || createId(),
-      type,
-      name,
-      organization: getValue("organization"),
-      location: getValue("location"),
-      deadline,
-      status,
-      funding,
-      url: getSafeUrl(url),
-      documents: getValue("documents"),
-      notes: getValue("notes"),
-      updatedAt: new Date().toISOString()
-    };
+  applications = editingId
+    ? applications.map(item => item.id === editingId ? record : item)
+    : [...applications, record];
 
+  if (!saveApplications()) {
+    applications = previous;
+    return;
+  }
+
+  clearForm();
+  renderApplications();
+  showToast("Opportunity saved successfully.");
+});
+
+// ---------- Actions ----------
+
+function handleAction(action, id) {
+  const item = applications.find(record => record.id === id);
+  if (!item) return;
+
+  if (action === "edit") {
+    fillForm(item);
+    return;
+  }
+
+  if (action === "toggle") {
     const previous = applications;
 
-    applications = editingId
-      ? applications.map(item => item.id === editingId ? record : item)
-      : [...applications, record];
+    applications = applications.map(record =>
+      record.id === id
+        ? {
+            ...record,
+            status: record.status === "Applied" ? "Not applied" : "Applied",
+            updatedAt: new Date().toISOString()
+          }
+        : record
+    );
 
     if (!saveApplications()) {
       applications = previous;
       return;
     }
 
-    clearForm();
     renderApplications();
-    showMessage("Opportunity saved successfully.");
-  });
+    showToast("Application status updated.");
+    return;
+  }
+
+  if (action === "delete") {
+    if (!confirm(`Delete "${item.name}"? This cannot be undone.`)) return;
+
+    const previous = applications;
+    applications = applications.filter(record => record.id !== id);
+
+    if (!saveApplications()) {
+      applications = previous;
+      return;
+    }
+
+    if (editingId === id) clearForm();
+
+    renderApplications();
+    showToast("Opportunity deleted.");
+    return;
+  }
+
+  if (action === "export-one") {
+    downloadCSV([item], "opportunity-record.csv");
+  }
 }
 
-// ---------- Card actions ----------
-
-if (applicationList) {
-  applicationList.addEventListener("click", event => {
-    const button = event.target.closest("button[data-action]");
-    if (!button) return;
-
-    const { action, id } = button.dataset;
-    const item = applications.find(record => record.id === id);
-
-    if (!item) return;
-
-    if (action === "edit") {
-      fillForm(item);
-      return;
-    }
-
-    if (action === "toggle") {
-      const previousStatus = item.status;
-
-      const updated = {
-        ...item,
-        status: item.status === "Applied" ? "Not applied" : "Applied",
-        updatedAt: new Date().toISOString()
-      };
-
-      const previous = applications;
-
-      applications = applications.map(record =>
-        record.id === id ? updated : record
-      );
-
-      if (!saveApplications()) {
-        applications = previous;
-        return;
-      }
-
-      renderApplications();
-      return;
-    }
-
-    if (action === "delete") {
-      if (!confirm(`Delete "${item.name}"? This cannot be undone.`)) {
-        return;
-      }
-
-      const previous = applications;
-
-      applications = applications.filter(record => record.id !== id);
-
-      if (!saveApplications()) {
-        applications = previous;
-        return;
-      }
-
-      if (editingId === id) clearForm();
-
-      renderApplications();
-      showMessage("Opportunity deleted.");
-      return;
-    }
-
-    if (action === "export-one") {
-      downloadCSV([item], "opportunity-record.csv");
-    }
-  });
-}
+document.addEventListener("click", event => {
+  const button = event.target.closest("button[data-action]");
+  if (button) handleAction(button.dataset.action, button.dataset.id);
+});
 
 // ---------- CSV export ----------
 
 function downloadCSV(records, filename) {
   if (!records.length) {
-    showMessage("There are no records to export.");
+    showToast("There are no records to export.", true);
     return;
   }
 
   const columns = [
     "type", "name", "organization", "location", "deadline",
-    "status", "funding", "url", "documents", "notes", "updatedAt"
+    "status", "funding", "url", "description", "documents",
+    "notes", "rejectionReason", "updatedAt"
   ];
 
   function csvCell(value) {
     let text = String(value ?? "");
 
-    // Reduce the risk of spreadsheet formula execution.
-    if (/^[\s]*[=+\-@]/.test(text)) {
-      text = "'" + text;
-    }
+    if (/^[\s]*[=+\-@]/.test(text)) text = "'" + text;
 
     return '"' + text.replace(/"/g, '""') + '"';
   }
@@ -706,7 +752,6 @@ function downloadCSV(records, filename) {
 
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
-
   link.href = url;
   link.download = filename;
 
@@ -717,42 +762,76 @@ function downloadCSV(records, filename) {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
-// Add the export-all button if it is not already present.
-const existingExportButton = getElement("exportAll");
+$("exportAll").addEventListener("click", () => {
+  downloadCSV(applications, "my-opportunities.csv");
+});
 
-if (existingExportButton) {
-  existingExportButton.addEventListener("click", () => {
-    downloadCSV(applications, "my-opportunities.csv");
+// ---------- Navigation ----------
+
+function updateNavigation() {
+  const sections = [
+    "dashboard", "opportunities", "deadlines",
+    "rejections", "addOpportunity"
+  ];
+
+  const requested = (location.hash || "#dashboard").slice(1);
+  const active = sections.includes(requested) ? requested : "dashboard";
+
+  sections.forEach(id => {
+    $(id).hidden = id !== active;
   });
-} else if (applicationList && applicationList.closest(".panel")) {
-  const exportButton = document.createElement("button");
 
-  exportButton.type = "button";
-  exportButton.id = "exportAll";
-  exportButton.className = "primary-button";
-  exportButton.textContent = "Export all records (CSV)";
-  exportButton.style.marginBottom = "16px";
+  const headings = {
+    dashboard: "Home workspace",
+    opportunities: "All opportunities",
+    deadlines: "Deadline centre",
+    rejections: "Rejection review",
+    addOpportunity: editingId ? "Edit opportunity" : "Add opportunity"
+  };
 
-  exportButton.addEventListener("click", () => {
-    downloadCSV(applications, "my-opportunities.csv");
+  $("pageHeading").textContent = headings[active];
+
+  document.querySelectorAll(".nav-link").forEach(link => {
+    const selected = link.getAttribute("href") === "#" + active;
+    link.classList.toggle("active", selected);
+
+    if (selected) link.setAttribute("aria-current", "page");
+    else link.removeAttribute("aria-current");
   });
 
-  applicationList.closest(".panel").insertBefore(
-    exportButton,
-    applicationList
-  );
+  $("sidebar").classList.remove("open");
+  $("menuToggle").setAttribute("aria-expanded", "false");
 }
 
-// ---------- Search and filters ----------
+$("menuToggle").addEventListener("click", () => {
+  const open = $("sidebar").classList.toggle("open");
+  $("menuToggle").setAttribute("aria-expanded", String(open));
+});
 
-[searchInput, typeFilter, statusFilter, fundingFilter]
-  .filter(Boolean)
-  .forEach(control => {
-    control.addEventListener("input", renderApplications);
-    control.addEventListener("change", renderApplications);
+window.addEventListener("hashchange", updateNavigation);
+
+document.querySelectorAll(".navigation a, .welcome-banner a, .panel-heading a")
+  .forEach(link => {
+    link.addEventListener("click", () => {
+      $("sidebar").classList.remove("open");
+    });
   });
 
-// ---------- Initialise ----------
+[$("search"), $("typeFilter"), $("statusFilter"), $("fundingFilter")]
+  .forEach(element => {
+    element.addEventListener("input", renderApplications);
+    element.addEventListener("change", renderApplications);
+  });
+
+// ---------- Start ----------
 
 applications = loadApplications();
+
+$("todayLabel").textContent = new Date().toLocaleDateString(
+  undefined,
+  { weekday: "short", day: "numeric", month: "short", year: "numeric" }
+);
+
+updateRejectionField();
 renderApplications();
+updateNavigation();

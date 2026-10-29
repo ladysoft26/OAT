@@ -3,417 +3,339 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#0B1739">
-
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0b1533">
   <title>Opportunity Hub | Application Tracker</title>
-  <meta name="description"
-    content="Organise your jobs, scholarships, internships, grants and other opportunities.">
-
   <link rel="stylesheet" href="styles.css">
   <script src="app.js" defer></script>
 </head>
-
 <body>
-  <aside class="sidebar" id="sidebar">
-    <a class="brand" href="#dashboard" aria-label="Opportunity Hub home">
-      <span class="brand-icon">O</span>
-      <span>
-        <strong>Opportunity Hub</strong>
-        <small>Your next chapter starts here</small>
-      </span>
-    </a>
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar">
+      <a class="brand" href="#dashboard">
+        <span class="brand-icon">O</span>
+        <span>Opportunity<span class="brand-light">Hub</span>
+          <small>YOUR FUTURE, ORGANIZED</small>
+        </span>
+      </a>
 
-    <nav class="navigation" aria-label="Main navigation">
       <p class="nav-label">WORKSPACE</p>
-      <a class="nav-link active" href="#dashboard">
-        <span class="nav-icon">▦</span> Dashboard
-      </a>
-      <a class="nav-link" href="#opportunities">
-        <span class="nav-icon">▤</span> My opportunities
-      </a>
-      <a class="nav-link" href="#deadlines">
-        <span class="nav-icon">◷</span> Deadlines
-        <span class="nav-count" id="navDeadlineCount">0</span>
-      </a>
-      <a class="nav-link" href="#activity">
-        <span class="nav-icon">↻</span> Activity history
-      </a>
+      <nav class="navigation">
+        <a class="nav-link active" href="#dashboard">⌂ <span>Home workspace</span></a>
+        <a class="nav-link" href="#opportunities">▤ <span>All opportunities</span></a>
+        <a class="nav-link" href="#deadlines">◷ <span>Deadlines</span>
+          <span class="nav-count" id="navDeadlineCount">0</span>
+        </a>
+        <a class="nav-link" href="#rejections">⚑ <span>Rejection review</span></a>
+        <a class="nav-link" href="#addOpportunity">＋ <span>Add opportunity</span></a>
+      </nav>
 
-      <p class="nav-label">MANAGE</p>
-      <a class="nav-link" href="#addOpportunity">
-        <span class="nav-icon">＋</span> Add opportunity
-      </a>
-    </nav>
-
-    <div class="sidebar-bottom">
-      <div class="sidebar-tip">
-        <span class="tip-icon">✦</span>
-        <strong>Keep moving forward</strong>
-        <p>Every application is a step towards your next opportunity.</p>
-      </div>
-      <p class="sidebar-footer">OPPORTUNITY HUB · 1.0</p>
-    </div>
-  </aside>
-
-  <main class="main-content">
-    <header class="topbar">
-      <button class="menu-toggle" id="menuToggle"
-        type="button" aria-label="Toggle navigation"
-        aria-expanded="false" aria-controls="sidebar">☰</button>
-
-      <div class="breadcrumb">
-        <span>Workspace</span>
-        <span class="breadcrumb-separator">/</span>
-        <strong id="pageHeading">Dashboard</strong>
-      </div>
-
-      <a class="topbar-action" href="#addOpportunity">
-        <span>＋</span> Add opportunity
-      </a>
-    </header>
-
-    <div class="page-container">
-      <!-- DASHBOARD -->
-      <section id="dashboard" class="page-section">
-        <div class="welcome-row">
-          <div>
-            <p class="eyebrow">YOUR PERSONAL COMMAND CENTRE</p>
-            <h1>Welcome to your hub.</h1>
-            <p class="muted">
-              Track your progress, stay ahead of deadlines, and keep every
-              opportunity organised.
-            </p>
-          </div>
-          <div class="today-chip">
-            <span class="today-dot"></span>
-            <span id="todayLabel">Your application journey</span>
-          </div>
+      <div class="sidebar-bottom">
+        <div class="sidebar-tip">
+          <span>✦ Your next opportunity awaits</span>
+          <p>Stay organized, learn from every application, and keep moving forward.</p>
         </div>
+        <p class="sidebar-foot">OPPORTUNITY HUB · VERSION 2</p>
+      </div>
+    </aside>
 
-        <div class="stats-grid">
-          <article class="stat-card stat-blue">
-            <div class="stat-top">
-              <span class="stat-label">Total opportunities</span>
-              <span class="stat-icon">▤</span>
-            </div>
-            <p class="stat-value" id="totalCount">0</p>
-            <p class="stat-caption">All tracked records</p>
-          </article>
-
-          <article class="stat-card stat-green">
-            <div class="stat-top">
-              <span class="stat-label">Applications sent</span>
-              <span class="stat-icon">✓</span>
-            </div>
-            <p class="stat-value" id="appliedCount">0</p>
-            <p class="stat-caption">Marked as applied</p>
-          </article>
-
-          <article class="stat-card stat-amber">
-            <div class="stat-top">
-              <span class="stat-label">Upcoming deadlines</span>
-              <span class="stat-icon">◷</span>
-            </div>
-            <p class="stat-value" id="deadlineCount">0</p>
-            <p class="stat-caption">Due within 7 days</p>
-          </article>
-
-          <article class="stat-card stat-red">
-            <div class="stat-top">
-              <span class="stat-label">Overdue</span>
-              <span class="stat-icon">!</span>
-            </div>
-            <p class="stat-value" id="overdueCount">0</p>
-            <p class="stat-caption">Past the deadline</p>
-          </article>
+    <main class="main-area">
+      <header class="topbar">
+        <button id="menuToggle" class="menu-toggle"
+          type="button" aria-label="Open navigation" aria-expanded="false">☰</button>
+        <div>
+          <p class="eyebrow">YOUR PERSONAL COMMAND CENTRE</p>
+          <h1 id="pageHeading">Home workspace</h1>
         </div>
+        <div class="today-chip">
+          <span>▦</span>
+          <span id="todayLabel"></span>
+        </div>
+      </header>
 
-        <div class="dashboard-grid">
-          <section class="panel" id="deadlines">
+      <div class="workspace">
+        <section class="page-section" id="dashboard">
+          <div class="welcome-banner">
+            <div>
+              <p class="eyebrow light">YOUR JOURNEY, YOUR PROGRESS</p>
+              <h2>Make every opportunity count.</h2>
+              <p>Track your applications, stay ahead of deadlines, and learn from every outcome.</p>
+              <a class="button button-light" href="#addOpportunity">＋ Add an opportunity</a>
+            </div>
+            <div class="banner-symbol" aria-hidden="true">✦</div>
+          </div>
+
+          <div class="stats-grid">
+            <article class="stat-card">
+              <span class="stat-icon blue-icon">▤</span>
+              <p>Total opportunities</p>
+              <strong id="totalCount">0</strong>
+              <small>All tracked records</small>
+            </article>
+            <article class="stat-card">
+              <span class="stat-icon amber-icon">◷</span>
+              <p>Not yet applied</p>
+              <strong id="pendingCount">0</strong>
+              <small>Still to work on</small>
+            </article>
+            <article class="stat-card">
+              <span class="stat-icon green-icon">✓</span>
+              <p>Applications submitted</p>
+              <strong id="appliedCount">0</strong>
+              <small>Marked as applied</small>
+            </article>
+            <article class="stat-card">
+              <span class="stat-icon red-icon">!</span>
+              <p>Deadlines in 7 days</p>
+              <strong data-deadline-count>0</strong>
+              <small>Active opportunities due soon</small>
+            </article>
+          </div>
+
+          <section class="panel deadline-summary">
             <div class="panel-heading">
               <div>
-                <p class="eyebrow">STAY PREPARED</p>
-                <h2>Deadline centre</h2>
+                <p class="eyebrow">STAY AHEAD</p>
+                <h2>Deadline alerts</h2>
               </div>
-              <span class="section-icon red-icon">◷</span>
+              <a href="#deadlines" class="text-link">View all →</a>
             </div>
-
-            <div id="deadlineNotice" class="notice" role="status"
-              aria-live="polite">
-              Your deadlines will appear here.
-            </div>
-            <div id="deadlineList" class="deadline-list"></div>
+            <p id="deadlineNotice" class="notice">Loading deadlines...</p>
+            <div id="deadlinePreview" class="deadline-list"></div>
           </section>
 
           <section class="panel">
             <div class="panel-heading">
               <div>
-                <p class="eyebrow">YOUR MOMENTUM</p>
-                <h2>Application progress</h2>
+                <p class="eyebrow">LEARN AND GROW</p>
+                <h2>Rejection review</h2>
+                <p class="muted">Review outcomes and note what you can improve.</p>
               </div>
-              <span class="section-icon blue-icon">↗</span>
+              <a href="#rejections" class="text-link">Review all →</a>
             </div>
-
-            <div class="progress-summary">
-              <div>
-                <span class="muted">Applications submitted</span>
-                <strong id="progressPercent">0%</strong>
+            <div class="rejection-summary">
+              <div class="rejection-count-box">
+                <strong id="rejectionCount">0</strong>
+                <span>Rejected applications</span>
               </div>
-              <div class="progress-track">
-                <div id="progressBar" class="progress-fill"></div>
+              <div id="homeRejectionList" class="rejection-list">
+                <p class="muted">Your rejected applications will appear here.</p>
               </div>
-              <p id="progressCaption" class="muted">
-                Add opportunities to start tracking your progress.
-              </p>
-            </div>
-
-            <div class="status-breakdown">
-              <div><span class="status-dot dot-blue"></span>
-                Not applied <strong id="pendingCount">0</strong></div>
-              <div><span class="status-dot dot-purple"></span>
-                In progress <strong id="inProgressCount">0</strong></div>
-              <div><span class="status-dot dot-green"></span>
-                Applied <strong id="submittedCount">0</strong></div>
-              <div><span class="status-dot dot-amber"></span>
-                Interviews <strong id="interviewCount">0</strong></div>
-              <div><span class="status-dot dot-green"></span>
-                Offers <strong id="offerCount">0</strong></div>
             </div>
           </section>
-        </div>
 
-        <section class="panel recent-panel">
-          <div class="panel-heading">
-            <div>
-              <p class="eyebrow">LATEST UPDATES</p>
-              <h2>Recent activity</h2>
+          <section class="panel">
+            <div class="panel-heading">
+              <div>
+                <p class="eyebrow">YOUR TRACKING OVERVIEW</p>
+                <h2>Recent opportunities</h2>
+              </div>
+              <a href="#opportunities" class="text-link">View all →</a>
             </div>
-            <a class="text-link" href="#activity">View all →</a>
-          </div>
-          <div id="recentActivity" class="activity-list"></div>
+            <div id="recentApplications" class="application-grid"></div>
+          </section>
         </section>
-      </section>
 
-      <!-- ADD OPPORTUNITY -->
-      <section id="addOpportunity" class="page-section">
-        <div class="section-intro">
-          <p class="eyebrow">GROW YOUR OPPORTUNITIES</p>
-          <h1>Add an opportunity</h1>
-          <p class="muted">
-            Save the important details so you never lose track of an application.
-          </p>
-        </div>
-
-        <section class="panel form-panel">
-          <div class="panel-heading">
-            <div>
-              <h2 id="formHeading">Opportunity details</h2>
-              <p class="muted">Fields marked * are required.</p>
-            </div>
-            <span class="section-icon blue-icon">＋</span>
+        <section class="page-section" id="opportunities" hidden>
+          <div class="section-intro">
+            <p class="eyebrow">YOUR OPPORTUNITY LIBRARY</p>
+            <h2>All opportunities</h2>
+            <p>Search, filter, edit, and manage every opportunity in one place.</p>
           </div>
 
-          <form id="applicationForm">
-            <div class="form-grid">
+          <section class="panel">
+            <div class="filter-grid">
+              <div class="form-group search-field">
+                <label for="search">Search</label>
+                <input id="search" type="search"
+                  placeholder="Search name, organization, description...">
+              </div>
               <div class="form-group">
-                <label for="type">Opportunity type *</label>
-                <select id="type" name="type" required>
-                  <option value="Scholarship">Scholarship</option>
-                  <option value="Job">Job</option>
-                  <option value="Internship">Internship</option>
-                  <option value="Grant">Grant</option>
-                  <option value="Fellowship">Fellowship</option>
-                  <option value="Volunteering">Volunteering</option>
-                  <option value="Others">Others</option>
+                <label for="typeFilter">Opportunity type</label>
+                <select id="typeFilter">
+                  <option value="">All types</option>
+                  <option>Scholarship</option>
+                  <option>Job</option>
+                  <option>Internship</option>
+                  <option>Grant</option>
+                  <option>Fellowship</option>
+                  <option>Volunteering</option>
+                  <option>Others</option>
                 </select>
               </div>
-
               <div class="form-group">
-                <label for="name">Opportunity name *</label>
-                <input id="name" name="name" type="text" required
-                  maxlength="200"
-                  placeholder="e.g. Global Master's Scholarship">
-              </div>
-
-              <div class="form-group">
-                <label for="organization">Organisation or institution</label>
-                <input id="organization" name="organization" type="text"
-                  maxlength="200" placeholder="University or company">
-              </div>
-
-              <div class="form-group">
-                <label for="location">Country or location</label>
-                <input id="location" name="location" type="text"
-                  maxlength="150" placeholder="e.g. Nigeria, UK, Remote">
-              </div>
-
-              <div class="form-group">
-                <label for="deadline">Application deadline</label>
-                <input type="date" id="deadline">
-              </div>
-
-              <div class="form-group">
-                <label for="status">Application status *</label>
-                <select id="status" name="status" required>
-                  <option value="Not applied">Not applied</option>
-                  <option value="In progress">In progress</option>
-                  <option value="Applied">Applied</option>
-                  <option value="Interview">Interview</option>
-                  <option value="Offer received">Offer received</option>
-                  <option value="Rejected">Rejected</option>
+                <label for="statusFilter">Status</label>
+                <select id="statusFilter">
+                  <option value="">All statuses</option>
+                  <option>Not applied</option>
+                  <option>In progress</option>
+                  <option>Applied</option>
+                  <option>Interview</option>
+                  <option>Offer received</option>
+                  <option>Rejected</option>
                 </select>
               </div>
-
               <div class="form-group">
-                <label for="funding">Funding level *</label>
-                <select id="funding" name="funding" required>
-                  <option value="Unknown">Not yet known</option>
-                  <option value="Fully funded">Fully funded</option>
-                  <option value="Partially funded">Partially funded</option>
-                  <option value="Self-funded">Self-funded</option>
-                  <option value="Not applicable">Not applicable</option>
+                <label for="fundingFilter">Funding</label>
+                <select id="fundingFilter">
+                  <option value="">All funding</option>
+                  <option>Unknown</option>
+                  <option>Fully funded</option>
+                  <option>Partially funded</option>
+                  <option>Self-funded</option>
+                  <option>Not applicable</option>
                 </select>
               </div>
-
-              <div class="form-group">
-                <label for="url">Official opportunity link</label>
-                <input id="url" name="url" type="url"
-                  placeholder="https://example.com/opportunity">
-              </div>
-
-              <div class="form-group full-width">
-                <label for="documents">Required documents</label>
-                <textarea id="documents" name="documents" rows="3"
-                  maxlength="2000"
-                  placeholder="CV, transcript, passport, recommendation letter..."></textarea>
-              </div>
-
-              <div class="form-group full-width">
-                <label for="notes">Notes and next steps</label>
-                <textarea id="notes" name="notes" rows="4"
-                  maxlength="5000"
-                  placeholder="Eligibility, funding details, interview preparation..."></textarea>
-              </div>
             </div>
-
-            <div class="form-actions">
-              <button id="submitButton" class="button button-primary"
-                type="submit">＋ Save opportunity</button>
-              <button id="cancelEdit" class="button button-secondary"
-                type="button" hidden>Cancel editing</button>
-              <button class="button button-ghost"
-                type="reset">Clear form</button>
+            <div class="list-toolbar">
+              <span id="resultCount">0 opportunities</span>
+              <button id="exportAll" class="button button-outline" type="button">↓ Export CSV</button>
             </div>
-          </form>
+            <div id="applicationList" class="application-grid"></div>
+            <p id="emptyMessage" class="empty-state">No opportunities yet. Add your first one!</p>
+          </section>
         </section>
-      </section>
 
-      <!-- OPPORTUNITY LIST -->
-      <section id="opportunities" class="page-section">
-        <div class="section-intro">
-          <p class="eyebrow">EVERYTHING IN ONE PLACE</p>
-          <h1>My opportunities</h1>
-          <p class="muted">Search, filter, update, and manage your records.</p>
-        </div>
+        <section class="page-section" id="deadlines" hidden>
+          <div class="section-intro">
+            <p class="eyebrow">PLAN AHEAD</p>
+            <h2>Deadline centre</h2>
+            <p>See upcoming and overdue deadlines for active opportunities.</p>
+          </div>
+          <div class="stats-grid compact-stats">
+            <article class="stat-card">
+              <p>Due within 7 days</p>
+              <strong data-deadline-count>0</strong>
+            </article>
+            <article class="stat-card">
+              <p>Overdue</p>
+              <strong id="overdueCount" class="danger-text">0</strong>
+            </article>
+          </div>
+          <section class="panel">
+            <div class="panel-heading"><h2>Upcoming and overdue</h2></div>
+            <div id="deadlineList" class="deadline-list"></div>
+          </section>
+        </section>
 
-        <section class="panel">
-          <div class="panel-heading">
-            <div>
-              <h2>Your application portfolio</h2>
-              <p class="muted" id="resultCount">0 opportunities</p>
+        <section class="page-section" id="rejections" hidden>
+          <div class="section-intro">
+            <p class="eyebrow">TURN EXPERIENCE INTO PROGRESS</p>
+            <h2>Rejection review</h2>
+            <p>Record feedback, identify gaps, and prepare more confidently for your next application.</p>
+          </div>
+          <section class="panel">
+            <div class="panel-heading">
+              <h2>Rejected applications</h2>
+              <span class="pill rejected" id="rejectionPageCount">0 rejected</span>
             </div>
-            <button id="exportAll" class="button button-secondary"
-              type="button">↓ Export CSV</button>
+            <div id="rejectionList" class="rejection-list"></div>
+            <p id="emptyRejections" class="empty-state">No rejected applications yet.</p>
+          </section>
+        </section>
+
+        <section class="page-section" id="addOpportunity" hidden>
+          <div class="section-intro">
+            <p class="eyebrow">KEEP YOUR OPTIONS OPEN</p>
+            <h2 id="formHeading">Add an opportunity</h2>
+            <p>Capture the details, requirements, funding, and next steps.</p>
           </div>
 
-          <div class="filters">
-            <div class="form-group search-field">
-              <label for="search">Search opportunities</label>
-              <input id="search" type="search"
-                placeholder="Search name, organisation, notes...">
-            </div>
-
-            <div class="form-group">
-              <label for="typeFilter">Type</label>
-              <select id="typeFilter">
-                <option value="">All types</option>
-                <option value="Scholarship">Scholarship</option>
-                <option value="Job">Job</option>
-                <option value="Internship">Internship</option>
-                <option value="Grant">Grant</option>
-                <option value="Fellowship">Fellowship</option>
-                <option value="Volunteering">Volunteering</option>
-                <option value="Others">Others</option>
-              </select>
-            </div>
-
-            <div class="form-group">
-              <label for="statusFilter">Status</label>
-              <select id="statusFilter">
-                <option value="">All statuses</option>
-                <option value="Not applied">Not applied</option>
-                <option value="In progress">In progress</option>
-                <option value="Applied">Applied</option>
-                <option value="Interview">Interview</option>
-                <option value="Offer received">Offer received</option>
-                <option value="Rejected">Rejected</option>
-              </select>
-            </div>
-
-            <div class="form-group">
-              <label for="fundingFilter">Funding</label>
-              <select id="fundingFilter">
-                <option value="">All funding</option>
-                <option value="Unknown">Not yet known</option>
-                <option value="Fully funded">Fully funded</option>
-                <option value="Partially funded">Partially funded</option>
-                <option value="Self-funded">Self-funded</option>
-                <option value="Not applicable">Not applicable</option>
-              </select>
-            </div>
-          </div>
-
-          <div id="applicationList" class="application-list"></div>
-          <p id="emptyMessage" class="empty-state">
-            No opportunities yet. Add your first opportunity to get started.
-          </p>
+          <section class="panel form-panel">
+            <form id="applicationForm">
+              <div class="form-grid">
+                <div class="form-group">
+                  <label for="type">Opportunity type *</label>
+                  <select id="type" required>
+                    <option value="">Choose type</option>
+                    <option>Scholarship</option>
+                    <option>Job</option>
+                    <option>Internship</option>
+                    <option>Grant</option>
+                    <option>Fellowship</option>
+                    <option>Volunteering</option>
+                    <option>Others</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label for="name">Opportunity name *</label>
+                  <input id="name" required placeholder="e.g. Graduate Scholarship 2027">
+                </div>
+                <div class="form-group">
+                  <label for="organization">Organization / institution</label>
+                  <input id="organization" placeholder="University, company, foundation...">
+                </div>
+                <div class="form-group">
+                  <label for="location">Location</label>
+                  <input id="location" placeholder="Country, city, or remote">
+                </div>
+                <div class="form-group">
+                  <label for="deadline">Application deadline</label>
+                  <input id="deadline" type="date">
+                  <small>Choose a date from the calendar.</small>
+                </div>
+                <div class="form-group">
+                  <label for="status">Application status *</label>
+                  <select id="status" required>
+                    <option>Not applied</option>
+                    <option>In progress</option>
+                    <option>Applied</option>
+                    <option>Interview</option>
+                    <option>Offer received</option>
+                    <option>Rejected</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label for="funding">Funding type</label>
+                  <select id="funding">
+                    <option>Unknown</option>
+                    <option>Fully funded</option>
+                    <option>Partially funded</option>
+                    <option>Self-funded</option>
+                    <option>Not applicable</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label for="url">Official website / application link</label>
+                  <input id="url" type="url" placeholder="https://example.com">
+                </div>
+                <div class="form-group full-width">
+                  <label for="description">Opportunity description</label>
+                  <textarea id="description" rows="5"
+                    placeholder="Describe the opportunity, eligibility, benefits, responsibilities, required qualifications, funding coverage, and documents needed..."></textarea>
+                </div>
+                <div class="form-group full-width">
+                  <label for="documents">Required documents</label>
+                  <textarea id="documents" rows="2"
+                    placeholder="CV, transcript, statement of purpose, references..."></textarea>
+                </div>
+                <div class="form-group full-width">
+                  <label for="notes">Personal notes and next steps</label>
+                  <textarea id="notes" rows="3"
+                    placeholder="Tasks to complete, people to contact, questions to ask..."></textarea>
+                </div>
+                <div class="form-group full-width rejection-input" id="rejectionReasonGroup" hidden>
+                  <label for="rejectionReason">Reason for rejection / feedback</label>
+                  <textarea id="rejectionReason" rows="4"
+                    placeholder="Record the feedback received, possible reasons, skills to improve, and lessons for next time..."></textarea>
+                  <small>This is your personal record. If no explanation was provided, say so.</small>
+                </div>
+              </div>
+              <div class="form-actions">
+                <button class="button button-primary" id="submitButton" type="submit">＋ Save opportunity</button>
+                <button class="button button-outline" id="cancelEdit" type="button" hidden>Cancel editing</button>
+              </div>
+            </form>
+          </section>
         </section>
-      </section>
 
-      <!-- FULL ACTIVITY HISTORY -->
-      <section id="activity" class="page-section">
-        <div class="section-intro">
-          <p class="eyebrow">YOUR JOURNEY, DOCUMENTED</p>
-          <h1>Activity history</h1>
-          <p class="muted">
-            Review when you added opportunities, updated statuses, edited
-            records, and completed other actions.
-          </p>
-        </div>
-
-        <section class="panel">
-          <div class="panel-heading">
-            <div>
-              <h2>Activity timeline</h2>
-              <p class="muted">Newest activities appear first.</p>
-            </div>
-            <button id="clearActivity" class="button button-ghost"
-              type="button">Clear history</button>
-          </div>
-          <div id="activityHistory" class="activity-list"></div>
-          <p id="emptyActivity" class="empty-state">
-            Your activities will appear here as you use the tracker.
-          </p>
-        </section>
-      </section>
-
-      <footer class="page-footer">
-        <span>Opportunity Hub</span>
-        <span>Stay organised. Stay prepared. Keep progressing.</span>
-      </footer>
-    </div>
-  </main>
+        <footer class="page-footer">
+          <span>Opportunity Hub</span>
+          <span>Plan thoughtfully. Apply confidently. Keep growing.</span>
+        </footer>
+      </div>
+    </main>
+  </div>
 
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
 </body>

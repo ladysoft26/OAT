@@ -1,7 +1,7 @@
 
 "use strict";
-const SUPABASE_URL = "PASTE_YOUR_PROJECT_URL_HERE";
-const SUPABASE_ANON_KEY = "PASTE_YOUR_PUBLISHABLE_KEY_HERE";
+const SUPABASE_URL = "https://flovvlhxeigrgilmlvcb.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_YspkeCrCOeC2_YtT0cpS8g_KHRMnt_b";
 
 const supabaseClient = window.supabase.createClient(
   SUPABASE_URL,

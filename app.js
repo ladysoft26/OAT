@@ -11,6 +11,62 @@ const supabaseClient = window.supabase.createClient(
 
 const STORAGE_KEY = "opportunityTrackerApplicationsV1";
 
+let currentUser = null;
+let isRegistering = false;
+
+const authForm = document.getElementById("authForm");
+
+document.getElementById("authToggle").addEventListener("click", () => {
+  isRegistering = !isRegistering;
+
+  document.getElementById("authHeading").textContent =
+    isRegistering ? "Create your account" : "Welcome back";
+
+  document.getElementById("authSubmit").textContent =
+    isRegistering ? "Create account" : "Sign in";
+
+  document.getElementById("authToggle").textContent =
+    isRegistering ? "Already have an account? Sign in" :
+    "Create a new account";
+
+  document.getElementById("authMessage").textContent = "";
+});
+
+authForm.addEventListener("submit", async event => {
+  event.preventDefault();
+
+  const email = document.getElementById("authEmail").value.trim();
+  const password = document.getElementById("authPassword").value;
+  const message = document.getElementById("authMessage");
+  const button = document.getElementById("authSubmit");
+
+  button.disabled = true;
+  message.textContent = "Please wait...";
+
+  try {
+    const result = isRegistering
+      ? await supabaseClient.auth.signUp({ email, password })
+      : await supabaseClient.auth.signInWithPassword({ email, password });
+
+    if (result.error) throw result.error;
+
+    if (isRegistering && !result.data.session) {
+      message.textContent =
+        "Account created! Check your email to confirm your account.";
+      return;
+    }
+
+    currentUser = result.data.user;
+    message.textContent = "Login successful!";
+    document.getElementById("authScreen").hidden = true;
+
+  } catch (error) {
+    message.textContent = error.message;
+  } finally {
+    button.disabled = false;
+  }
+});
+
 const TYPES = [
   "Scholarship", "Job", "Internship", "Grant",
   "Fellowship", "Volunteering", "Others"

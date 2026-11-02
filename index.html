@@ -11,14 +11,34 @@
 <script src="app.js" defer></script>
 </head>
 <body>
-  <div class="app-shell">
-    <aside class="sidebar" id="sidebar">
-      <a class="brand" href="#dashboard">
-        <span class="brand-icon">OAT</span>
-        <span>Opportunity<span class="brand-light">Tracker</span>
-          <small>YOUR FUTURE, ORGANIZED</small>
-        </span>
-      </a>
+<div id="authScreen" class="auth-screen">
+  <div class="auth-card">
+    <h1>Opportunity Tracker</h1>
+    <p>Manage your jobs and scholarships in one place.</p>
+
+    <h2 id="authHeading">Welcome back</h2>
+
+    <form id="authForm">
+      <label for="authEmail">Email address</label>
+      <input id="authEmail" type="email" required
+        placeholder="Enter your email">
+
+      <label for="authPassword">Password</label>
+      <input id="authPassword" type="password"
+        minlength="6" required placeholder="Enter your password">
+
+      <button id="authSubmit" type="submit">
+        Sign in
+      </button>
+    </form>
+
+    <p id="authMessage" role="status"></p>
+
+    <button id="authToggle" type="button">
+      Create a new account
+    </button>
+  </div>
+</div>
 
       <p class="nav-label">WORKSPACE</p>
       <nav class="navigation">

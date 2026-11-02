@@ -1,10 +1,13 @@
 
 "use strict";
+const SUPABASE_URL = "PASTE_YOUR_PROJECT_URL_HERE";
+const SUPABASE_ANON_KEY = "PASTE_YOUR_PUBLISHABLE_KEY_HERE";
 
-// =============================================
-// OPPORTUNITY TRACKER
-// Browser storage version
-// =============================================
+const supabaseClient = window.supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_ANON_KEY
+);
+
 
 const STORAGE_KEY = "opportunityTrackerApplicationsV1";
 

@@ -551,3 +551,79 @@ button { cursor: pointer; }
   .welcome-banner h2 { font-size: 23px; }
   .list-toolbar { align-items: flex-start; flex-direction: column; }
 }
+
+/* LOGIN SCREEN */
+
+.auth-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: #0b1533;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+}
+
+.auth-screen[hidden] {
+  display: none;
+}
+
+.auth-card {
+  background: white;
+  width: 100%;
+  max-width: 420px;
+  padding: 35px;
+  border-radius: 18px;
+  box-shadow: 0 15px 40px rgba(0,0,0,.2);
+}
+
+.auth-card h1 {
+  color: #172554;
+  font-size: 26px;
+}
+
+.auth-card h2 {
+  margin-top: 30px;
+}
+
+.auth-card label {
+  display: block;
+  margin: 15px 0 6px;
+  font-weight: 600;
+}
+
+.auth-card input {
+  width: 100%;
+  padding: 13px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  box-sizing: border-box;
+}
+
+.auth-card button {
+  width: 100%;
+  padding: 13px;
+  margin-top: 18px;
+  border: none;
+  border-radius: 8px;
+  background: #2563eb;
+  color: white;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.auth-card button:disabled {
+  opacity: .6;
+  cursor: wait;
+}
+
+#authToggle {
+  background: transparent;
+  color: #2563eb;
+}
+
+#authMessage {
+  color: #2563eb;
+  overflow-wrap: anywhere;
+}
